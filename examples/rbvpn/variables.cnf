@@ -1,0 +1,8 @@
+
+variable "fw1name" {
+    default = "tst11"
+}
+
+variable "fw2name" {
+    default = "tst12"
+}

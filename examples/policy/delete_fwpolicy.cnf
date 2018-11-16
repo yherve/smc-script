@@ -1,0 +1,5 @@
+
+
+delete "#fw_policy/mypol7";
+delete "#host/myhost1";
+delete "#network/lan8int";

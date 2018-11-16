@@ -1,0 +1,136 @@
+<%namespace file="common.cnf" import="*"/>
+
+#
+#                                 +-------------+
+#                                 |             |
+#                                 |    smc      |
+#                                 |             |
+#                                 |             |
+#      +--+--+-+---+              +------+------+                 +------------+
+#      |           |                     |                        |            |
+#      |           |                     |mgtnw             +-----+fd02::2     |
+#      | dhclt3    |                     |                  |     |  dhsvr2    |
+#      |           |                     |                  |     |            |
+#      +-----+-----+               192.168.100.10           |     +------------+
+#            |                     +-----+----+             |
+#            |              +------+----------+-----+       |lan2svr
+#            |              | +--------+ +--------+ |       |
+#            |              | |        | |        | |       |
+#    lan1clt |              | |fwn11   | | fwn12  | |       |
+#            +--------------+ +        +-+        + +-------+
+#                   fd01::10| |        | |        | |fd02::10
+#                           | +--------+ +--------+ |
+#                           |         fwc10         |
+#                           +-----------------------+
+
+
+# -------------------------------------------------------------------
+# network
+# -------------------------------------------------------------------
+resource network {
+    network "mgtnw" {ipv4_network = 192.168.100.0/24 }
+}
+
+resource network {
+    network "lan1clt" {ipv6_network = fd01::/64 }
+}
+
+resource network {
+    network "lan2svr" {ipv6_network = fd02::/64 }
+}
+
+resource dhcp_server {
+    dhcp_server "dhsvr2" {ipv6_address = fd02::2}
+}
+
+# -------------------------------------------------------------------
+# policy
+# -------------------------------------------------------------------
+resource fw_policy {
+    fw_policy "${cluster_name}_policy" {
+        template "#fw_template_policy/Firewall Template";
+    }
+}
+
+# -------------------------------------------------------------------
+# access rules
+# -------------------------------------------------------------------
+resource fw_ipv6_access_rules {
+    target="#fw_policy/${cluster_name}_policy"
+    fw_ipv6_access_rule "allow_all" {
+        destinations.any = true
+        sources.any = true
+        services.any = true
+        action.action = allow
+    }
+}
+
+resource fw_ipv4_access_rules {
+    target="#fw_policy/${cluster_name}_policy"
+    fw_ipv4_access_rule "allow_all" {
+        destinations.any = true
+        sources.any = true
+        services.any = true
+        action.action = allow
+    }
+}
+
+# -------------------------------------------------------------------
+# cluster engine
+# -------------------------------------------------------------------
+resource fw_cluster {
+    fw_cluster ${cluster_name} {
+        cluster_mode=balancing
+        log_server_ref="#log_server/[0]"
+
+        firewall_node fwn11 {nodeid=1}
+        firewall_node fwn12 {nodeid=2}
+
+        physical_interface int0 {
+            interface_id=0
+            comment="management"
+            cvi_mode=packetdispatch
+            macaddress=00:00:5e:00:aa:02
+
+            ${cvi(0, "192.168.100.10/24", "true")}
+            ${ndi(1,0,"192.168.100.11/24", "true", "true", "true")}
+            ${ndi(2,0,"192.168.100.12/24", "true", "true", "true")}
+        }
+        physical_interface int1 {
+            interface_id=1
+            comment="to-dhcp-client"
+            cvi_mode=packetdispatch
+            macaddress=00:00:5e:00:bb:02
+            include_prefix_info_optioflag = true
+            managed_address_flag            = true
+            other_configuration_flag        = true
+            set_autonomous_address_flag     = false
+            duplicate_address_detection     = true
+            router_advertisement            = true
+
+            dhcpv6_relay {
+                enabled=true
+                trusted_circuit = false
+                dhcp_server_list.element "#dhcp_server/dhsvr2";
+            }
+
+            ${cvi(1, "fd01::10/64", "false", "true")}
+            ${ndi(1,1,"fd01::11/64")}
+            ${ndi(2,1,"fd01::12/64")}
+        }
+        physical_interface int2 {
+            interface_id=2
+            comment="to-dhcp-server"
+            cvi_mode=packetdispatch
+            macaddress=00:00:5e:00:cc:02
+
+            ${cvi(2, "fd02::10/64")}
+            ${ndi(1,2,"fd02::11/64")}
+            ${ndi(2,2,"fd02::12/64")}
+        }
+    }
+}
+
+${add_route("${cluster_name}", "192.168.100.1", "0.0.0.0/0")}
+
+${initial_contact("${cluster_name}", "fwn11", "fwn12", "${cluster_name}_policy")}

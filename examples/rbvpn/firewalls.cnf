@@ -1,0 +1,107 @@
+<%namespace file="common.cnf" import="*"/>
+
+# -------------------------------------------------------------------
+# single_fw fw1
+# -------------------------------------------------------------------
+
+resource single_fw {
+    single_fw "${fw1name}" {
+        log_server_ref="#log_server/[0]"
+        firewall_node "${fw1name}node" {nodeid=1}
+        gateway_settings_ref="#gateway_settings/Gateway Default Settings"
+
+        tunnel_interface "Tunnel Interface 1000" {
+            interface_id = 1000
+        }
+        physical_interface "Interface 0" {
+            interface_id=0
+            zone_ref="#interface_zone/MGMT"
+            single_node_interface {
+                address=192.168.100.11; network_value=192.168.100.0/24;
+                nicid=0; nodeid=1; auth_request=true; primary_mgt=true;
+            }
+        }
+
+        physical_interface "Interface 1" {
+            interface_id=1
+            zone_ref="#interface_zone/External"
+            single_node_interface {
+                address=10.0.3.11; network_value=10.0.3.0/24;
+                nicid=1; nodeid=1;
+            }
+        }
+
+        physical_interface "Interface 2" {
+            interface_id=2
+            zone_ref="#interface_zone/Internal"
+            dhcp_server_on_interface {
+                default_lease_time   = 3600
+                default_gateway      = 192.168.1.11
+                dhcp_address_range   = 192.168.1.100-192.168.1.200
+                # primary_dns_server   = 1.1.1.1
+                # secondary_dns_server = 9.9.9.9
+            }
+
+            single_node_interface {
+                address=192.168.1.11; network_value=192.168.1.0/24;
+                nicid=2; nodeid=1;
+            }
+        }
+    }
+}
+
+${add_route(fw1name, "192.168.100.1", "0.0.0.0/0")}
+${initial_contact(fw1name, "rbvpn_policy")}
+
+
+# -------------------------------------------------------------------
+# single_fw fw2
+# -------------------------------------------------------------------
+
+resource single_fw {
+    single_fw "${fw2name}" {
+        log_server_ref="#log_server/[0]"
+        firewall_node "${fw2name}node" {nodeid=1}
+
+        tunnel_interface "Tunnel Interface 1000" {
+            interface_id = 1000
+        }
+        physical_interface "Interface 0" {
+            interface_id=0
+            zone_ref="#interface_zone/MGMT"
+            single_node_interface {
+                address=192.168.100.12; network_value=192.168.100.0/24;
+                nicid=0; nodeid=1; auth_request=true; primary_mgt=true;
+            }
+        }
+
+        physical_interface "Interface 1" {
+            interface_id=1
+            zone_ref="#interface_zone/External"
+            single_node_interface {
+                address=10.0.3.12; network_value=10.0.3.0/24;
+                nicid=1; nodeid=1;
+            }
+        }
+
+        physical_interface "Interface 2" {
+            interface_id=2
+            zone_ref="#interface_zone/Internal"
+            dhcp_server_on_interface {
+                default_lease_time   = 3600
+                default_gateway      = 192.168.2.12
+                dhcp_address_range   = 192.168.2.100-192.168.2.200
+                # primary_dns_server   = 1.1.1.1
+                # secondary_dns_server = 9.9.9.9
+            }
+
+            single_node_interface {
+                address=192.168.2.12; network_value=192.168.2.0/24;
+                nicid=2; nodeid=1;
+            }
+        }
+    }
+}
+
+${add_route(fw2name, "192.168.100.1", "0.0.0.0/0")}
+${initial_contact(fw2name, "rbvpn_policy")}

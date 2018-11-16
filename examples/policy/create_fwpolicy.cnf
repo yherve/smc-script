@@ -1,0 +1,65 @@
+
+# -------------------------------------------------------------------
+# some network elements
+# -------------------------------------------------------------------
+
+resource {
+    host "myhost1" {ipv6_address = fd12::11}
+}
+
+resource {
+    network "lan8int" { ipv6_network = fd12::/64 }
+}
+
+# -------------------------------------------------------------------
+# policy
+# -------------------------------------------------------------------
+
+resource {
+    fw_policy "mypol7" {
+        template "#fw_template_policy/Firewall Template";
+    }
+}
+# -------------------------------------------------------------------
+# access rules
+# -------------------------------------------------------------------
+resource fw_ipv6_access_rules {
+    target="#fw_policy/mypol7"
+    fw_ipv6_access_rule "allow_all" {
+        action.action = allow
+        destinations.any = true
+        sources.any = true
+        services.any = true
+    }
+}
+
+resource "fw_ipv6_access_rules/allow_all/add_before" {
+    target="#fw_policy/mypol7"
+    fw_ipv6_access_rule "iamfirst" {
+        destinations.dst "#network/lan8int";
+        sources.src "#host/myhost1";
+        services.service "#tcp_service/SSH";
+        action.action = discard
+        options.log_level = stored
+    }
+}
+
+# -------------------------------------------------------------------
+# nat rules
+# -------------------------------------------------------------------
+resource fw_ipv6_nat_rules {
+    target="#fw_policy/mypol7"
+    fw_ipv6_nat_rule "masquerate_to_fd08" {
+        sources.src "#interface_zone/Internal";
+        destinations.dst "#interface_zone/External";
+        services.any = true
+        options.dynamic_src_nat {
+            automatic_proxy = true
+            translation_values {
+                translation_values.ip_descriptor = fd08::30
+                translation_values.max_port      = 65535
+                translation_values.min_port      = 1024
+            }
+        }
+    }
+}

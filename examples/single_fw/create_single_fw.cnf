@@ -1,0 +1,37 @@
+# This example shows how to create a single firewall
+
+<%namespace file="common.cnf" import="*"/>
+
+# define local variables
+<% fwnodename=fwname + "node" %>
+
+# -------------------------------------------------------------------
+# single_fw
+# -------------------------------------------------------------------
+
+resource "single_fw" {
+    single_fw "${fwname}" {
+        log_server_ref="#log_server/[0]"
+        ${firewall_node(fwnodename)}
+        ${static_interface("192.168.100.14/24", id=1, primary="true")}
+        ${static_interface("10.0.0.1/16", id=2)}
+        ${dns("8.8.8.8", "8.8.4.4")}
+        ${ntp("#ntp/fr_ntp")}
+    }
+}
+
+# set default route
+command "add_route" {
+    target="#single_fw/${fwname}"
+    params.gateway "192.168.100.1";
+    params.network "0.0.0.0/0";
+}
+
+command "bind" {
+    target="#single_fw/${fwname}/firewall_node/${fwnodename}"
+}
+
+command "initial_contact" {
+    target="#single_fw/${fwname}/firewall_node/${fwnodename}"
+    out="/tmp/engine.cfg"
+}
