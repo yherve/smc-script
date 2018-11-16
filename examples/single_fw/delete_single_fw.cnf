@@ -1,0 +1,5 @@
+# This example shows how to delete an existing resource
+
+delete "#single_fw/${fwname}";
+delete "#ntp/fr_ntp";
+#delete "#location/${fwname}_location";

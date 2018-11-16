@@ -1,0 +1,11 @@
+
+
+resource {
+    group "myg1" {}
+}
+
+update "group/myg1" {
+    add "sub_elements" {
+        element "#single_fw/tutu";
+    }
+}

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -eu
+
+if [ "$#" -ne 1 ]; then
+   echo "usage $0 <engine.cfg>"
+   exit 1
+fi
+
+engine_cfg=$1
+
+engine_ip=`perl -nle ' print "$1" if m|stonegate/network/ipaddr string ([\d\.]+)|' $engine_cfg`
+
+
+scp $engine_cfg "root@$engine_ip:/data/config/base/engine.cfg"
+ssh "root@$engine_ip" "sg-reconfigure --import; sg-contact-mgmt --auto"

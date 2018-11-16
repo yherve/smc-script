@@ -1,0 +1,8 @@
+
+
+delete "#fw_cluster/${cluster_name}";
+delete "#fw_policy/${cluster_name}_policy";
+delete "#network/mgtnw";
+delete "#network/lan1clt";
+delete "#network/lan2svr";
+delete "#dhcp_server/dhsvr2";

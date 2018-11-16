@@ -1,0 +1,66 @@
+# -------------------------------------------------------------------
+# single_fw fw1
+# -------------------------------------------------------------------
+
+# enable vpn on enpoint 10.0.3.11
+# -----------------------
+update "single_fw/${fw1name}/internal_gateway/[0]/internal_endpoint/10.0.3.11" {
+    set  { enabled=true }
+}
+
+# add route to 'lan2' via 'fw1' tunnel interface
+# ---------------------------------------------
+update "single_fw/${fw1name}/routing"{
+    set "//routing_node[@nic_id='1000']" {
+        children.routing_node "lan2" {
+            href="#network/lan2"
+            level=gateway
+        }
+    }
+}
+
+
+# -------------------------------------------------------------------
+# single_fw fw2
+# -------------------------------------------------------------------
+
+# enable vpn on enpoint 10.0.3.11
+# -----------------------
+update "single_fw/${fw2name}/internal_gateway/[0]/internal_endpoint/10.0.3.12" {
+    set  { enabled=true }
+}
+
+# add route to 'lan2' via 'fw1' tunnel interface
+# ---------------------------------------------
+update "single_fw/${fw2name}/routing"{
+    set "//routing_node[@nic_id='1000']" {
+        children.routing_node "lan1" {
+            href="#network/lan1"
+            level=gateway
+        }
+    }
+}
+
+# -------------------------------------------------------------------
+# create tunnel
+# -------------------------------------------------------------------
+resource {
+    rbvpn_tunnel "tun-${fw1name}-${fw2name}" {
+        tunnel_mode=vpn
+        enabled=true
+        pmtu_discovery=true
+        preshared_key="abcdef"
+        vpn_profile_ref = "#vpn_profile/VPN-A Suite"
+        monitoring_group_ref="#rbvpn_tunnel_monitoring_group/Uncategorized"
+
+
+        rbvpn_tunnel_side_a {
+            gateway_ref="#single_fw/${fw1name}/internal_gateway/[0]"
+            tunnel_interface_ref = "#single_fw/${fw1name}/tunnel_interface/[0]"
+        }
+        rbvpn_tunnel_side_b {
+            gateway_ref="#single_fw/${fw2name}/internal_gateway/[0]"
+            tunnel_interface_ref = "#single_fw/${fw2name}/tunnel_interface/[0]"
+        }
+    }
+}

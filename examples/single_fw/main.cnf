@@ -1,0 +1,3 @@
+
+<%include file="create_ntpserver.cnf"/>
+<%include file="create_single_fw.cnf"/>

@@ -1,0 +1,23 @@
+#   +------------+                                            +-------------+
+#   |            |                                            |             |
+#   |    host1   |                                            |  host2      |
+#   |            |                                            |             |
+#   +-----+------+                                            +-------+-----+
+#         |192.168.1.0/24                               192.168.2.0/24|
+#         |                                                           |
+#         |         +------------+            +------------+          |
+#         |         |            |   VPN      |            |          |
+#     lan1|         |   10.0.3.11|            |10.0.3.12   |          |lan2
+#         +---------+   fws11 NAT+============+NAT fws12   +----------+
+#                   |            |  lanext3   |            |
+#         INTERNAL  |            |10.0.3.0/24 |            | INTERNAL
+#           ZONE    +------------+            +------------+  ZONE
+#                                EXTERNAL ZONE
+
+<%namespace file="common.cnf" import="*"/>
+<%include file="policies.cnf"/>
+<%include file="firewalls.cnf"/>
+<%include file="vpn.cnf"/>
+
+${initial_contact(fw1name, "rbvpn_policy")}
+${initial_contact(fw2name, "rbvpn_policy")}

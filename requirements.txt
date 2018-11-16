@@ -1,0 +1,8 @@
+git+https://github.com/yherve/etconfig.git
+mako
+pyyaml
+argh
+argcomplete
+requests
+pyinstaller
+ipaddress

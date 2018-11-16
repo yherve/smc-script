@@ -1,0 +1,62 @@
+<%namespace file="common.cnf" import="*"/>
+
+# -------------------------------------------------------------------
+# nw elem
+# -------------------------------------------------------------------
+
+resource { network lan1 { ipv4_network = 192.168.1.0/24 }}
+resource { network lan2 { ipv4_network = 192.168.2.0/24 }}
+resource { network lanext3 { ipv4_network = 10.0.3.0/24 }}
+resource { interface_zone MGMT {}}
+
+# -------------------------------------------------------------------
+# policy
+# -------------------------------------------------------------------
+resource fw_policy {
+    fw_policy "rbvpn_policy" {template "#fw_template_policy/Firewall Template";}
+}
+
+# ALLOW any => any, svc=SSH
+# -------------------------
+resource fw_ipv4_access_rules {
+    target="#fw_policy/rbvpn_policy"
+    fw_ipv4_access_rule "rbvpn_allow_ssh" {
+        destinations.any = true
+        sources.any = true
+        services.service "#tcp_service/SSH";
+        action.action = allow
+    }
+}
+
+# ALLOW (lan1|lan2) => (lan1|lan2), svc=HTTP
+# ------------------------------------------
+resource fw_ipv4_access_rules {
+    target="#fw_policy/rbvpn_policy"
+    fw_ipv4_access_rule "rbvpn_allow_vpn" {
+        sources.src  "#network/lan1";
+        sources.src  "#network/lan2";
+        destinations.dst "#network/lan1";
+        destinations.dst "#network/lan2";
+        services.service "#tcp_service/HTTP";
+        action.action = allow
+        options.log_level=stored
+    }
+}
+
+
+# resource fw_ipv4_nat_rules {
+#     target="#fw_policy/rbvpn_policy"
+#     fw_ipv4_nat_rule "nat-to-external" {
+#         sources.src "#interface_zone/Internal";
+#         destinations.dst "#interface_zone/External";
+#         services.any = true
+#         options.dynamic_src_nat {
+#             automatic_proxy = true
+#             translation_values {
+#                 translation_values.element = "#interface_nic_x_ip_alias/$$ Interface ID 1.ip"
+#                 translation_values.min_port      = 1024
+#                 translation_values.max_port      = 65535
+#             }
+#         }
+#     }
+# }

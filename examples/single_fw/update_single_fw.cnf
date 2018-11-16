@@ -1,0 +1,25 @@
+# This example shows how to update an existing resource
+# - set location
+# - set encrypted config
+# - change dns (illustrate set/del/add)
+
+resource {
+    location "${fwname}_location"{
+        comment="location for ${fwname}"
+    }
+}
+
+update "#single_fw/${fwname}" {
+    set {
+        is_config_encrypted=true
+        location_ref="#location/${fwname}_location"
+    }
+    set "//domain_server_address[@value='8.8.4.4']" {
+        value=1.1.1.1 rank=2.0
+    }
+    del "//domain_server_address[@value='8.8.8.8']";
+    add "//domain_server_addresses" {
+        domain_server_address { value=1.1.0.0 rank=3.0 }
+        domain_server_address { value=9.9.9.9 rank=1.0 }
+    }
+}

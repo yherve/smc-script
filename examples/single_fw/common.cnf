@@ -1,0 +1,57 @@
+<%! import ipaddress %>
+
+# -------------------------------------------------------------------
+# firewall_node
+# -------------------------------------------------------------------
+<%def name="firewall_node(name, id=1)">
+        firewall_node "${name}" {
+            nodeid=${id}
+        }
+</%def>
+
+
+
+# -------------------------------------------------------------------
+# static_interface
+# -------------------------------------------------------------------
+<%def name="static_interface(ip, id, primary='false', nodeid=1)">
+ <% intf = ipaddress.ip_interface(unicode(ip)) %>
+        physical_interface "Interface ${id}" {
+            interface_id=${id}
+            single_node_interface {
+                address=${intf.ip}
+                network_value=${intf.network}
+                nicid=${id}
+                nodeid=${nodeid}
+                auth_request=${primary}
+                primary_mgt=${primary}
+            }
+        }
+</%def>
+
+
+# -------------------------------------------------------------------
+# dns
+# -------------------------------------------------------------------
+<%def name="dns(first, second=None)">
+        domain_server_addresses.domain_server_address {
+            value=${first}
+            rank=0.0
+        }
+% if second:
+        domain_server_addresses.domain_server_address {
+            value=${second}
+            rank=1.0
+        }
+% endif
+</%def>
+
+# -------------------------------------------------------------------
+# ntp server
+# -------------------------------------------------------------------
+<%def name="ntp(ntp_server)">
+        ntp_settings {
+            ntp_enable = true
+            ntp_server_refs.ntp_server_ref "${ntp_server}";
+        }
+</%def>

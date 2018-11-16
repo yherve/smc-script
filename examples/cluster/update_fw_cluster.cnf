@@ -1,0 +1,7 @@
+#!/usr/bin/env smc-script
+
+update "#fw_cluster/${cluster_name}" {
+    set "physical_interface[@interface_id='1']" {
+        dhcpv6_relay.trusted_circuit = false
+    }
+}
