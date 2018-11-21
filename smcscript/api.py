@@ -15,7 +15,7 @@ from lxml.builder import E
 from smcscript.resolver import resolve_hname, resolve_elt_hnames
 from smcscript.restapi import SMCRestApiClient
 from smcscript.utils import print_fmt, print_err
-from smcscript.exceptions import ResolveError
+from smcscript.exceptions import ResolveError, SMCOperationFailure
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -343,10 +343,13 @@ class SMCClient(object):
         logger.debug("text=%s", resp.text)
 
 
-    def update(self, smc_element):
+    def update(self, smc_element, print_only=False):
         """
         apply the change list of an smc element and send a rest call
         to update the object in the smc.
+
+        :raises SMCOperationFailure: if update unsuccessful
+
         """
         # todo refresh etags if object has changed
         # todo exc
@@ -360,10 +363,22 @@ class SMCClient(object):
         resolve_elt_hnames(self._client, smc_element.data)
 
         xml = etree.tostring(smc_element.data, pretty_print=True)
-        resp = self._client.put(target_href, headers=headers, data=xml)
-        logger.debug("status_code=%d", resp.status_code)
-        logger.debug("text=%s", resp.text)
-        # todo on success only
+
+        if print_only:
+            elt = smc_element.data
+            print_fmt(CREATE_PRINT_FMT,
+                      verb="PUT",
+                      target_href=target_href,
+                      tag=elt.tag,
+                      name=elt.get("name", "-"),
+                      xml=xml)
+            return
+
+        try:
+            resp = self._client.put(target_href, headers=headers, data=xml)
+        except SMCOperationFailure as exc:
+            logger.error("Failed to update '%s'", unicode(exc) )
+            raise exc
         smc_element.change_list = []
 
     def execute(self, target, operation=None, **kwargs):
@@ -383,6 +398,6 @@ class SMCClient(object):
         if isinstance(target, SMCElement):
             headers['If-Match'] = target.etag
 
-        #todo exc
+        # exceptions propagated: eg SMCOperationFailure
         resp = self._client.post(target_href, headers=headers, params=kwargs)
         return resp.text

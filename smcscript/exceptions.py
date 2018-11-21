@@ -1,5 +1,7 @@
 
 
+class CommandError(Exception):pass
+
 class SMCConnectionError(Exception):pass
 class UnsupportedEntryPoint(Exception):pass
 class ConfigLoadError(Exception):pass

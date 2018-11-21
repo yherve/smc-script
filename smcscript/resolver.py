@@ -268,7 +268,7 @@ def resolve_hname(rest_clt, hname):
             raise ResolveError("Cannot resolve hname part '{}'".format(part))
 
     if result_url is None:
-        raise ResolveError("Failed to get url for {}".format(hname))
+        raise ResolveError("Failed to resolve hname '{}'".format(hname))
 
     logger.debug("resolved: target_href=%s", result_url)
     return result_url

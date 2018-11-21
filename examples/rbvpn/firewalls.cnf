@@ -29,7 +29,10 @@ resource single_fw {
             zone_ref="#interface_zone/External"
             single_node_interface {
                 address=10.0.3.11; network_value=10.0.3.0/24;
-                nicid=1; nodeid=1; outgoing=true;
+                nicid=1; nodeid=1;
+                # the parameter 'outgoing' is mandatory for the vpn to
+                # work. I don't know why.
+                outgoing=true;
             }
         }
 

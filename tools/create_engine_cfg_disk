@@ -1,0 +1,64 @@
+#!/usr/bin/env python2.7
+
+import argparse
+import getpass
+import shutil
+import ipaddress
+import json
+import logging
+import os
+import random
+import re
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+from contextlib import closing
+
+
+logger = logging.getLogger(__name__)
+
+
+def create_usb(engine_cfg, usb_file_name, rm=False):
+    if not rm and os.path.isfile(usb_file_name):
+        print("Error: usb file '{}' already exist".format(usb_file_name))
+        sys.exit(1)
+
+
+    exit_status = subprocess.call([
+        'dd',  'if=/dev/zero',
+        'of='+usb_file_name, 'bs=1024', 'count=10240'])
+    exit_status = subprocess.call(['mkfs.fat', usb_file_name])
+
+    # mount done in the namespace
+    tmp_mount_point = '/tmp/usbtmp'
+    if not os.path.isdir(tmp_mount_point):
+        exit_status = subprocess.call(['mkdir', tmp_mount_point])
+
+        # exit_status = subprocess.call([
+        #     'sudo', 'mount',  '-o',  'loop,rw', '-t',  'msdos',
+        #     usb_file_name, tmp_mount_point])
+        exit_status = subprocess.call([
+            'fusefat',  '-o',  'rw+', usb_file_name, tmp_mount_point])
+
+    exit_status = subprocess.call(['cp',  engine_cfg, tmp_mount_point + "/engine.cfg"])
+    # exit_status = subprocess.call(['umount', tmp_mount_point])
+    exit_status = subprocess.call(['fusermount',  '-u', tmp_mount_point])
+    shutil.rmtree(tmp_mount_point, ignore_errors=True)
+
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        # prog='sg-contact-mgmt',
+        description='create a virtual usb disk (fs image, fat formatted) '\
+        'containing the engine.cfg file')
+
+    parser.add_argument('engine_cfg',
+                        help='filepath to engine.cfg')
+    parser.add_argument('usb_file_name',
+                        help='filepath to generated virtual usb disk')
+    args = parser.parse_args()
+
+    create_usb(args.engine_cfg, args.usb_file_name);

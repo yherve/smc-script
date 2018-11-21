@@ -16,13 +16,12 @@ from lxml import etree
 import etconfig
 
 from argh.decorators import arg, named
-from argh.exceptions import CommandError
 from mako.template import Template
 from mako.lookup import TemplateLookup
 from mako.exceptions import TemplateLookupException, SyntaxException
 
 from smcscript.exceptions import SMCConnectionError, InvalidSessionError, \
-    ResolveError, SMCOperationFailure
+    ResolveError, SMCOperationFailure, CommandError
 from smcscript.session import Session as SMCSession
 from smcscript.api import SMCClient
 from smcscript.script import run_script, RunScriptError

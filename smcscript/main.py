@@ -11,7 +11,7 @@ import sys
 import argh
 
 from smcscript.utils import get_config_dir, print_err
-from smcscript.exceptions import InvalidSessionError
+from smcscript.exceptions import InvalidSessionError, CommandError
 
 from smcscript.commands import cmd_list
 
@@ -43,6 +43,8 @@ def main():
         parser.dispatch()
 
     # pylint: disable=broad-except
+    except (CommandError) as err:
+        print_err("Error: {}", unicode(err))
     except (InvalidSessionError) as err:
         print_err("Error: {}", unicode(err))
     except Exception as e:

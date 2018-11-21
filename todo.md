@@ -3,31 +3,125 @@ single_fw/fws11/internal_gateway/fws11 - Primary/internal_endpoint/10.0.3.11
 
 ## features to add
 
+### read variable from file or env
 
-- auto login after session expired does not work
-- simplify get result (eg by skipping false values, links...)
-- read variables from a file
-- concurrent update exception
-- href to hname in get display (reverse resolve in get)
-- get element and display as python api (lxml builder)
-- list available versions/make the version available in a mako variable
-- write doc !
-- write tests !
-- log command to view and control the log verbosity/shows log
-- config script in yaml
-- config script in json
-- bash completion
-- automatically prefix all names
-- scripted login/logout
-- hname with regexp or wildcard, eg ~log_server/LogServer.*
-- cache resolved hname
+#### using env variable
+
+similar to terraform https://www.terraform.io/docs/configuration/variables.html
+
+    export CNF_VAR_ip="1.2.3.4"
+
+makes 'ip' variable available
+
+#### using file
+
+- matching *.cnfvars
+- '--var-file='
+
+### bug: auto login after session expired does not work
+
+Unexpected error 'UnicodeEncodeError'
+
+### hname containing regexp or wildcard
+
+not sure for the syntax:
+
+    '#log_server/~LogServer'
+    '#log_server/LogServer*'
+    '#log_server/LogServer.+'
+
+
+### filter get result with xpath
+
+using an xpath expression
+
+    smc-script get 'fw_policy/AAAA/fw_ipv4_access_rules/Rule @106.4' -q "action['@action']"
+
+or simply a dotted notation
+
+    smc-script get 'fw_policy/AAAA/fw_ipv4_access_rules/Rule @106.4' -q "destinations.dst"
+
+### simplify get result
+
+skip
+
+- false values
+- links
+- key, read_only, system
+
+### handle concurrent update exception
+
+reload with correct etag, reapply pending changes and reattempt update
+
+### href to hname in get display (reverse resolve in get)
+
+- at least for elements
+
+### 'get' cli command outputs python api
+
+- generates automatically the python script of an existing element
+
+### 'get' with wildcard
+
+eg get all the access rules
+
+    smc-script get 'fw_policy/AAAA/fw_ipv4_access_rules/*'
+
+
+### deal with api version
+
+- list available versions on the cli
+- make the working version available in a variable to have conditionals
+
+### write doc
+
+!
+
+### write tests
+
+- check exit status
+- at least run automatically all the examples
+
+### log cli command
+
+- view
+- and control the log verbosity/shows log
+- delete log
+
+### bash completion
+
+-
+
+### config script in yaml
+
+-
+
+### config script in json
+
+-
+
+### automatically prefix all names
+
+-
+
+### scripted login/logout
+
+-
+
+### cache resolved hname for performance
+
+-
+
+### python3 support
+
+-
+
 
 ## nice to have
 
-- filter get result with xpath
 - pluggable template engine (jinja2...)
 
-## ansible
+## ansible integration
 
 write the config as ansible playbook
 
@@ -45,11 +139,11 @@ unix commands:
 - mv
 
 
-## test/examples
+## examples
 
-- test virtual engine
-- test vpn
-- cloud use case scaleset (sg_smc_create_engine replacement)
+- virtual engine
+- policy based vpns
+- cloud scaleset (sg_smc_create_engine replacement)
 
 ---
 
@@ -90,3 +184,4 @@ unix commands:
 - login fail 401 proper displayed message
 - list hname at any level
 - hname resolve code more generic
+- rb vpn example

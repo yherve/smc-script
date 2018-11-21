@@ -104,7 +104,7 @@ def print_fmt(fmt, *args, **kwargs):
         cmd_fmt = fmt
     else:
         cmd_fmt = fmt.format(*args, **kwargs)
-    print(cmd_fmt)
+    print(cmd_fmt.encode('utf8'))
 
 
 
@@ -112,7 +112,11 @@ def print_err(fmt, *args, **kwargs):
     """
     print to stderr and format in one function
     """
-    print_fmt(fmt, *args, file=sys.stderr, **kwargs)
+    if not args and not kwargs:
+        cmd_fmt = fmt
+    else:
+        cmd_fmt = fmt.format(*args, **kwargs)
+    print(cmd_fmt.encode('utf8'), file=sys.stderr)
 
 def print_values(*args, **kwargs):
     """
@@ -122,7 +126,7 @@ def print_values(*args, **kwargs):
     lst1 = ["{}".format(str(a)) for a in args]
     lst2 = ["{}={}".format(k, v) for k, v in kwargs.items()]
 
-    print(sep.join(lst1 + lst2))
+    print(sep.join(lst1 + lst2).encode('utf8'))
 
 
 

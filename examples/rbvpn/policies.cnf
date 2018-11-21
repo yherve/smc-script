@@ -44,19 +44,21 @@ resource fw_ipv4_access_rules {
 }
 
 
-# resource fw_ipv4_nat_rules {
-#     target="#fw_policy/rbvpn_policy"
-#     fw_ipv4_nat_rule "nat-to-external" {
-#         sources.src "#interface_zone/Internal";
-#         destinations.dst "#interface_zone/External";
-#         services.any = true
-#         options.dynamic_src_nat {
-#             automatic_proxy = true
-#             translation_values {
-#                 translation_values.element = "#interface_nic_x_ip_alias/$$ Interface ID 1.ip"
-#                 translation_values.min_port      = 1024
-#                 translation_values.max_port      = 65535
-#             }
-#         }
-#     }
-# }
+# NAT traffic from INTERNAL to EXTERNAL
+# ------------------------------------------
+resource fw_ipv4_nat_rules {
+    target="#fw_policy/rbvpn_policy"
+    fw_ipv4_nat_rule "nat-to-external" {
+        sources.src "#interface_zone/Internal";
+        destinations.dst "#interface_zone/External";
+        services.any = true
+        options.dynamic_src_nat {
+            automatic_proxy = true
+            translation_values {
+                translation_values.element = "#interface_nic_x_ip_alias/$$ Interface ID 1.ip"
+                translation_values.min_port      = 1024
+                translation_values.max_port      = 65535
+            }
+        }
+    }
+}

@@ -1,0 +1,161 @@
+#!/usr/bin/env python2.7
+
+import argparse
+import getpass
+import shutil
+import ipaddress
+import json
+import logging
+import os
+import random
+import re
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+from contextlib import closing
+
+
+logger = logging.getLogger(__name__)
+
+def qemu_create_image(hda_name, hda_size='10G', rm=False):
+    logger.debug("crte image")
+    if not rm and os.path.isfile(hda_name):
+        print("Error: disk '{}' already exist".format(hda_name))
+        sys.exit(1)
+    exit_status = subprocess.call(['qemu-img', 'create',  '-f',  'qcow2',
+                                   hda_name, hda_size])
+
+
+class QemuProcess(object):
+    """
+    cmd = qemu-system-x86_64                            \
+              -enable-kvm                                  \
+              -m 1G -name ngfw_install                     \
+              -boot d -cdrom '{cdrom}'                     \
+              -hda '{hda}' {extra_args}                    \
+              -serial unix:{serial_socket},server          \
+              -balloon virtio -nographic -no-reboot
+
+    process = QemuProcess(cmd, hda=hda, cdrom=cdrom, extra_args=extra_args)
+
+    start qemu with possible interactions with the serial console
+
+    """
+    def __init__(self, cmd, **kwargs):
+        self._socket_tmp_dir = tempfile.mkdtemp(
+            prefix = "sockqemu", dir = os.environ['HOME'])
+
+        qemu_serial_socket_path = os.path.join(
+            self._socket_tmp_dir, "{0}-serial".format("fw"))
+
+        cmdfmt = cmd.format(serial_socket=qemu_serial_socket_path, **kwargs)
+
+        logger.debug(cmdfmt)
+        self._qemu_proc = subprocess.Popen(cmdfmt, shell=True)
+        self._wait_for_serial_socket(qemu_serial_socket_path)
+
+        logger.debug("before connect")
+        self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._sock.connect(qemu_serial_socket_path)
+        logger.debug("after connect")
+
+
+    def wait(self):
+        self._qemu_proc.wait()
+        self._sock.close()
+
+    def _wait_for_serial_socket(self, path, SOCKET_RETRIES=6):
+        for x in range(0, SOCKET_RETRIES):
+            if os.path.exists(path):
+                return
+            time.sleep(5)
+        sys.exit(1)
+
+    def send(self, msg):
+        self._sock.send(msg)
+
+    def expect(self, waitstr):
+        sockdata = ""
+
+        logger.debug("Entering expect, "
+                         "will look for {0}\n".format(waitstr))
+
+        while sockdata.find(waitstr) == -1:
+            sockdata = sockdata + self._sock.recv(1)
+
+        logger.debug("Returning from expect, "
+                         "sockdata is {0}\n".format(sockdata))
+
+
+
+
+
+def firewall_silent_install(qemu, speed=''):
+    logger.debug("configure_vm: Configuring VM...\n")
+    qemu.expect("Press ENTER to start serial console installation")
+    qemu.send("{0}\n".format(speed))
+    qemu.expect("--MORE--")
+    qemu.send("q")
+    qemu.expect("Do you want to continue?")
+    qemu.send("YESDE\n")
+    qemu.expect("Enter your choice:")
+    qemu.send("1\n")
+    qemu.expect("Do you want to continue?")
+    qemu.send("YES\n")
+    qemu.expect("Enter image partition addition in MB")
+    qemu.send("500\n")
+    qemu.expect("press Enter to reboot.")
+    qemu.send("\n")
+
+
+def install_fw(hda, cdrom, rm=False):
+
+    qemu_create_image(hda, rm=rm)
+
+    extra_args = ""
+
+    cmd = """qemu-system-x86_64                            \
+              -enable-kvm                                  \
+              -m 1G -name ngfw_install                     \
+              -boot d -cdrom '{cdrom}'                     \
+              -hda '{hda}' {extra_args}                    \
+              -serial unix:{serial_socket},server          \
+              -balloon virtio -nographic -no-reboot"""
+
+    qemu = QemuProcess(cmd, hda=hda, cdrom=cdrom, extra_args=extra_args)
+    firewall_silent_install(qemu)
+    qemu.wait()
+
+
+
+
+if __name__ == '__main__':
+    # if len(sys.argv) != 3:
+    #     print("usage: " + sys.argv[0] + " <dest_qcow_file> <iso_file>")
+    #     sys.exit(1)
+
+    # qcow = sys.argv[1]
+    # iso = sys.argv[2]
+
+
+    parser = argparse.ArgumentParser(
+        # prog='sg-contact-mgmt',
+        description='install ngfw to a qcow2 image'
+    )
+    parser.add_argument('qcow',
+                        help='filepath to destination qcow2 image')
+    parser.add_argument('iso',
+                        help='filepath to the source iso')
+    parser.add_argument('-s', '--silent', help='silent mode', action='store_true')
+    parser.add_argument('-f', '--force', help='overwrite existing qcow2', action='store_true')
+    args = parser.parse_args()
+
+    print(args.silent)
+    if not args.silent:
+        logging.basicConfig(level=logging.DEBUG)
+
+    # eg
+    # '/data/tmp/fw.qcow2', '/data/Downloads/sg_engine_6.6.0.22005.r660-g0432bce.1810111149_x86-64-small.iso'
+    install_fw(args.qcow, args.iso, args.force);

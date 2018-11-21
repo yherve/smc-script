@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals
 import os
 import logging
 import sys
+import time
 
 # from mako.template import Template
 from mako.lookup import TemplateLookup
@@ -99,8 +100,11 @@ def do_update_elt(smc_client, target_hname, update_elt, print_only=False):
     :returns: None
     """
 
-    #todo err
-    smc_elt = smc_client.get(target_hname)
+    try:
+        smc_elt = smc_client.get(target_hname)
+    except Exception as exc:
+        logger.error(exc)
+        return
 
     for operation in update_elt:
 
@@ -119,12 +123,7 @@ def do_update_elt(smc_client, target_hname, update_elt, print_only=False):
             print_err("invalid update {}", operation.tag)
             return
 
-    if print_only:
-        smc_elt.apply_changes()
-        print(etconfig.dumps(smc_elt.data).encode('utf8'))
-        return
-
-    smc_client.update(smc_elt)
+    smc_client.update(smc_elt, print_only)
 
 
 def do_execute(smc_client, target_hname, cmd_elt, print_only=False):

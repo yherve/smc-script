@@ -9,7 +9,7 @@ import logging
 from lxml import etree
 
 from smcscript.session import Session
-from smcscript.exceptions import InvalidSessionError, SMCOperationFailure
+from smcscript.exceptions import InvalidSessionError, SMCOperationFailure, UnsupportedEntryPoint
 from smcscript.utils import load_session, save_session
 
 # pylint: disable=invalid-name
@@ -71,10 +71,18 @@ class SMCRestApiClient(object):
         e.g.
 
         http://192.168.100.7:8082/6.6/elements/single_fw
+
+
         """
         if not self.smc_session:
             return None
-        url = self.smc_session.entry_points.get(endpoint)
+
+        try:
+            url = self.smc_session.entry_points.get(endpoint)
+        except UnsupportedEntryPoint as exc:
+            logger.error("UnsupportedEntryPoint: %s", exc)
+            return None
+
         if path:
             if path[0] == '/':
                 url = url + path
@@ -147,7 +155,7 @@ class SMCRestApiClient(object):
                     details = " ".join(details)
 
         elif content_type.startswith('application/xml'):
-            xml = etree.XML(unicode(resp.text))
+            xml = etree.XML(str(resp.text))
             message=xml.get("message")
             details=xml.get("details")
 
