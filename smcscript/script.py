@@ -142,6 +142,11 @@ def do_execute(smc_client, target_hname, cmd_elt, print_only=False):
     """
     # target_hname = _get_target_hname(cmd_elt)
 
+    body = None
+    if len(cmd_elt):
+        body = cmd_elt[-1]
+
+
     params = {}
     for param in cmd_elt.findall("params/*"):
         params[param.tag] = param.text
@@ -150,11 +155,15 @@ def do_execute(smc_client, target_hname, cmd_elt, print_only=False):
         for key, value in param.attrib.items():
             params[key] = value
 
-    if print_only:
-        print_values("post", target_hname, params=params)
-        return
+    if cmd_elt.tag=='command':
+        method="POST"
+    elif cmd_elt.tag=='get':
+        method="GET"
 
-    resp = smc_client.execute(target_hname, **params)
+    resp = smc_client.execute(target_hname, operation=None,
+                              method=method,
+                              body=body, params=params,
+                              print_only=print_only)
     out = cmd_elt.get("out")
     if out:
         with open(out, 'w+') as the_file:
@@ -389,7 +398,8 @@ def run_script(smc_client, filename, print_only=False,
         resource=do_create_elt,
         delete=do_delete_elt,
         update=do_update_elt,
-        command=do_execute)
+        command=do_execute,
+        get=do_execute)
 
     print ("Applying config...")
 

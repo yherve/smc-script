@@ -35,7 +35,8 @@ client.create(data)
 fw1 = client.get("#single_fw/myfw1")
 
 client.execute("#single_fw/myfw1", "add_route",
-               gateway="192.168.100.1", network="0.0.0.0/0")
+               params = dict(gateway="192.168.100.1",
+                             network="0.0.0.0/0"))
 
 client.execute(fw1, "firewall_node/myfw1node/bind")
 res = client.execute(fw1, "firewall_node/myfw1node/initial_contact")

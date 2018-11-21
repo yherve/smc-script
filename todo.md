@@ -3,6 +3,10 @@ single_fw/fws11/internal_gateway/fws11 - Primary/internal_endpoint/10.0.3.11
 
 ## features to add
 
+### exit status is incorrect
+
+on error
+
 ### read variable from file or env
 
 #### using env variable
@@ -21,6 +25,10 @@ makes 'ip' variable available
 ### bug: auto login after session expired does not work
 
 Unexpected error 'UnicodeEncodeError'
+
+### wait for policy to be published/report error
+
+policy push from the cli with progress bar
 
 ### hname containing regexp or wildcard
 

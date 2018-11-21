@@ -14,7 +14,7 @@ from lxml.builder import E
 # from smcscript.session import Session
 from smcscript.resolver import resolve_hname, resolve_elt_hnames
 from smcscript.restapi import SMCRestApiClient
-from smcscript.utils import print_fmt, print_err
+from smcscript.utils import print_fmt, print_err, print_values
 from smcscript.exceptions import ResolveError, SMCOperationFailure
 
 # pylint: disable=invalid-name
@@ -381,7 +381,10 @@ class SMCClient(object):
             raise exc
         smc_element.change_list = []
 
-    def execute(self, target, operation=None, **kwargs):
+
+
+    def execute(self, target, operation=None, method="POST", body=None,
+                params=None, print_only=False):
         """
         target is either an hname or an instance of SMCElement
         """
@@ -392,12 +395,27 @@ class SMCClient(object):
         target_href = resolve_hname(self._client, hname)
 
         headers = {
-            'Accept': 'application/json', 'Content-Type': 'application/json'
+            'Accept': 'application/xml',
+            'Content-Type': 'application/xml'
         }
 
         if isinstance(target, SMCElement):
             headers['If-Match'] = target.etag
 
+        xml=None
+        if body is not None:
+            resolve_elt_hnames(self._client, body,
+                               ignore_errors=print_only)
+            xml = etree.tostring(body, encoding='utf8',
+                                 pretty_print=True)
+
+        method = method.upper()
+        if print_only:
+            print_fmt("{} {} {}\n{}", method, target_href, params, xml)
+            return
+
+
         # exceptions propagated: eg SMCOperationFailure
-        resp = self._client.post(target_href, headers=headers, params=kwargs)
+        resp = self._client.request(method, target_href, headers=headers,
+                                 params=params, data=xml)
         return resp.text
