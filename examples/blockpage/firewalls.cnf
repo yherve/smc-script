@@ -1,0 +1,83 @@
+<%namespace file="common.cnf" import="*"/>
+
+# -------------------------------------------------------------------
+# single_fw
+# -------------------------------------------------------------------
+resource single_fw {
+    single_fw "${fw1name}" {
+        log_server_ref="#log_server/[0]"
+        is_config_encrypted=false
+        firewall_node "${fw1name}node" {nodeid=1}
+        ${dns(dns_1, dns_2)}
+
+        physical_interface "Interface 0" {
+            interface_id=0
+            zone_ref="#interface_zone/MGMT"
+            single_node_interface {
+                address=192.168.100.11; network_value=192.168.100.0/24;
+                nicid=0; nodeid=1;
+                primary_mgt=true;
+                # dynamic_index = 1
+                # automatic_default_route=false;
+                # reverse_connection=true;
+            }
+        }
+
+        physical_interface "Interface 1" {
+            interface_id=1
+            zone_ref="#interface_zone/External"
+            single_node_interface {
+                dynamic_index = 2
+                nicid=1; nodeid=1;
+                automatic_default_route=true;
+            }
+        }
+
+        physical_interface "Interface 2" {
+            interface_id=2
+            zone_ref="#interface_zone/Internal"
+            dhcp_server_on_interface {
+                default_lease_time   = 3600
+                default_gateway      = 192.168.3.11
+                dhcp_address_range   = 192.168.3.150-192.168.3.200
+                primary_dns_server   = ${dns_1}
+                secondary_dns_server = ${dns_2}
+            }
+
+            single_node_interface {
+                address=192.168.3.11;
+                network_value=192.168.3.0/24;
+                nicid=2; nodeid=1;
+                auth_request=true;
+            }
+        }
+
+        # enable ThreatSeeker
+        # -------------------
+        ts_settings {ts_enabled = true}
+
+        # decrypt tls traffic
+        # -------------------
+        tls_deny_decrypting=false
+        tls_cryptography_suite_set_ref="${crypto_suite}"
+
+        tls_client_protections {
+            tls_client_protection {
+                ca_for_signing_ref = "#tls_signing_certificate_authority/${signing_ca}"
+                proxy_usage "tls_inspection";
+                tls_trusted_ca_tag_refs {
+                    tls_trusted_ca_tag_ref "${trusted_ca}";
+                }
+            }
+        }
+    }
+}
+
+# update "single_fw/${fw1name}/routing" {
+#     del "//routing_node[@dynamic_classid='netlink' and @dynamic_nicid='0']/children";
+#     set "//routing_node[@dynamic_classid='netlink' and @dynamic_nicid='0']" {
+#         dynamic_classid = gateway
+#         related_element_type = router
+#         children {}
+#     }
+# }

@@ -1,0 +1,28 @@
+#   +------------+                 +--------------+
+#   |            |          mgtnw1 |              |
+#   |    host1   |            +----+   smc        |
+#   |            |            |    |              |
+#   +-----+------+            |    +--------------+
+#         |                   |
+#         |192.168.3.0/24     O 192.168.100.1
+#         |                   |
+#         |                   |
+#         |                   |192.168.100.0/24
+#         |         +---------+--+
+#         |         |  fws11     |
+#   intnw3|         |            |
+#         |         |   10.0.2.11|
+#         +---------+         NAT+==========O 10.0.2.1
+#                   |            |  extnw2
+#         INTERNAL  |            |10.0.2.0/24
+#           ZONE    +------------+
+#                                EXTERNAL
+#                                  ZONE
+
+<%namespace file="common.cnf" import="*"/>
+<%include file="elements.cnf"/>
+<%include file="import_ca.cnf"/>
+<%include file="policies.cnf"/>
+<%include file="firewalls.cnf"/>
+
+${initial_contact(fw1name, "ibp_policy")}

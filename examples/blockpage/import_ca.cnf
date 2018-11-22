@@ -1,0 +1,19 @@
+
+
+resource {
+    tls_signing_certificate_authority "${signing_ca}" {}
+}
+
+command certificate_import {
+    target="tls_signing_certificate_authority/${signing_ca}"
+    file "certificate" {
+        filename="MyRootCA.pem"
+    }
+}
+
+command private_key_import {
+    target="tls_signing_certificate_authority/${signing_ca}"
+    file "private_key" {
+        filename="MyRootCA.key"
+    }
+}

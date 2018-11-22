@@ -1,0 +1,33 @@
+<%namespace file="common.cnf" import="*"/>
+
+# -------------------------------------------------------------------
+# nw elem
+# -------------------------------------------------------------------
+
+# mgmt
+# ---------
+resource {
+    interface_zone MGMT {}
+}
+
+resource {
+    network mgtnw1 {ipv4_network = 192.168.100.0/24}
+}
+resource {
+    router mgtnw1_router {address = 192.168.100.1}
+}
+
+# external
+# ---------
+resource {
+    network extnw2 {ipv4_network = 10.0.2.0/24}
+}
+resource {
+    router extnw2_router {address = 10.0.2.1}
+}
+
+# internal
+# ---------
+resource {
+    network intnw3 {ipv4_network = 192.168.3.0/24}
+}

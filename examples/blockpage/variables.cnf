@@ -1,0 +1,27 @@
+
+variable "fw1name" { default = "fws11" }
+variable "dns_1" { default = "8.8.8.8" }
+variable "dns_2" {default = "8.8.4.4" }
+
+variable "mgtnw1_ip" {default = "192.168.100.11/24" }
+variable "mgtnw1_router" {default = "192.168.100.1" }
+
+#not needed (dhcp)
+variable "extnw2_ip" {default = "10.0.2.11/24" }
+variable "extnw2_router" {default = "10.0.2.1" }
+
+variable "intnw3_ip" {default = "192.168.3.11/24" }
+variable "intnw3_router" {default = "192.168.3.1/24" }
+
+
+variable "crypto_suite" {
+    default = "#tls_cryptography_suite_set/ECA Compatible SSL Cryptographic Algorithms"
+}
+
+variable "signing_ca" {
+    default = "myrootca"
+}
+
+variable "trusted_ca" {
+    default = "#trusted_ca_tag/All Trusted CAs"
+}

@@ -43,14 +43,14 @@ def main():
         parser.dispatch()
 
     # pylint: disable=broad-except
-    except (CommandError) as err:
+    except (CommandError, InvalidSessionError) as err:
         print_err("Error: {}", unicode(err))
-    except (InvalidSessionError) as err:
-        print_err("Error: {}", unicode(err))
+        sys.exit(1)
     except Exception as e:
         print_err("Unexpected error '{}': {}\n(see {})", type(e).__name__, e, logfile_path)
         logger.debug("Got unexpected exception: %s", type(e))
         logger.exception(e)
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

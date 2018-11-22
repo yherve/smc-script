@@ -1,0 +1,78 @@
+<%namespace file="common.cnf" import="*"/>
+
+# -------------------------------------------------------------------
+# policy
+# -------------------------------------------------------------------
+resource fw_policy {
+    fw_policy "ibp_policy" {template "#fw_template_policy/Firewall Template";}
+}
+# note that rules are in the opposite order as the desired order
+
+# ALLOW any => any, svc=any
+# -------------------------
+resource fw_ipv4_access_rules {
+    target="#fw_policy/ibp_policy"
+    fw_ipv4_access_rule "allow_all" {
+        destinations.any = true
+        sources.any = true
+        services.any = true
+        action.action = allow
+
+    }
+}
+
+# block facebook
+# -------------------------
+resource fw_ipv4_access_rules {
+    target="#fw_policy/ibp_policy"
+    fw_ipv4_access_rule "block_facebook" {
+        destinations.any = true
+        sources.any = true
+        services.service "#url_category_group/Social Web - Facebook";
+        action.action = discard
+
+    }
+}
+
+# http/https => decrypt and inspect
+# -------------------------
+resource fw_ipv4_access_rules {
+    target="#fw_policy/ibp_policy"
+    fw_ipv4_access_rule "decrypt_https" {
+        destinations.any = true
+        sources.any = true
+        services {
+            service "#tcp_service/HTTP";
+            service "#tcp_service/HTTPS (with decryption)";
+        }
+        action {
+            action = continue
+            decrypting      = true
+            deep_inspection = true
+        }
+        options.log_level = stored
+    }
+}
+
+
+# nat outgoing traffic
+# -------------------------
+resource fw_ipv4_nat_rules {
+    target="#fw_policy/ibp_policy"
+    fw_ipv4_nat_rule "nat-to-external" {
+        # sources.src "#network/intnw3";
+        sources.src "#interface_zone/Internal";
+        # destinations.any = true
+        # note that setting dest to 'External' zone does not work
+        destinations.dst "#interface_zone/External";
+        services.any = true
+        options.dynamic_src_nat {
+            automatic_proxy = true
+            translation_values {
+                translation_values.element = "#dynamic_interface_alias/$$ DHCP Interface 2.ip"
+                translation_values.min_port      = 1024
+                translation_values.max_port      = 65535
+            }
+        }
+    }
+}

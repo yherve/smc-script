@@ -131,21 +131,51 @@ def do_execute(smc_client, target_hname, cmd_elt, print_only=False):
 
     :param SMCClient smc_client: client to send requests to smc
     :param etree.Element cmd_elt: element tree, example:
-     eg
-     command "add_route" {
+
+    eg1: passing url parameters
+    --------------------------
+    command "add_route" {
         target="single_fw/myfw1"
         params.gateway "192.168.100.1";
         params.network "10.10.0.0/24";
     }
 
+    eg2: passing xml content in the body
+    --------------------------
+    command "generate_self_signed_cert" {
+        target="tls_signing_certificate_authority/mycert2"
+        data.ca_signer_info {...}
+    }
+
+    eg3: passing mime multipart file
+    --------------------------
+    command certificate_import {
+        target="tls_signing_certificate_authority/mycert3"
+        file "certificate" {
+            filename="MyRootCA.pem"
+        }
+    }
+
+    eg4: getting output in a file
+    -------------------------------
+    command "initial_contact" {
+        target="#single_fw/${fwname}/firewall_node/${fwname}node"
+        params.enable_ssh=true
+        params.keyboard="fr"
+        params.time_zone="Europe/Paris"
+        out="/tmp/engine_${fwname}.cfg"
+    }
+
+
     :returns: None
     """
-    # target_hname = _get_target_hname(cmd_elt)
+    target_hname = _get_target_hname(cmd_elt)
 
-    body = None
-    if len(cmd_elt):
-        body = cmd_elt[-1]
-
+    # for params, both syntax are allowed (attribute-based and
+    # element-based)
+    # params.param1="aaa"
+    # and
+    # params.param1 "aaa";
 
     params = {}
     for param in cmd_elt.findall("params/*"):
@@ -160,10 +190,19 @@ def do_execute(smc_client, target_hname, cmd_elt, print_only=False):
     elif cmd_elt.tag=='get':
         method="GET"
 
+
+    data = cmd_elt.find("data/*")
+
+    files={}
+    for f in cmd_elt.findall("file"):
+        name = f.get("name")
+        filename = f.get("filename")
+        files[name] = open(filename, "rb")
+
     resp = smc_client.execute(target_hname, operation=None,
                               method=method,
-                              body=body, params=params,
-                              print_only=print_only)
+                              data=data, params=params,
+                              print_only=print_only, files=files)
     out = cmd_elt.get("out")
     if out:
         with open(out, 'w+') as the_file:
@@ -370,11 +409,14 @@ def run_script(smc_client, filename, print_only=False,
     var_config_file_name = lookup_dir + "/variables.cnf"
     logger.debug("var_config_file_name=%s", var_config_file_name)
     if os.path.isfile(var_config_file_name):
+        logger.debug("opening =%s", var_config_file_name)
         var_elts = load_config_file(var_config_file_name)
+        logger.debug("var_elts=%s", var_elts)
         for var_elt in var_elts:
             name = var_elt.get("name")
             value = var_elt.get("default")
             variables[name] = value
+            logger.debug("VAR: %s=%s", name, value)
 
     if user_variables:
         variables.update(user_variables)

@@ -383,8 +383,8 @@ class SMCClient(object):
 
 
 
-    def execute(self, target, operation=None, method="POST", body=None,
-                params=None, print_only=False):
+    def execute(self, target, operation=None, method="POST", data=None,
+                params=None, print_only=False, files=None, **kwargs):
         """
         target is either an hname or an instance of SMCElement
         """
@@ -396,26 +396,30 @@ class SMCClient(object):
 
         headers = {
             'Accept': 'application/xml',
-            'Content-Type': 'application/xml'
         }
+        if not files:
+            headers['Content-Type']= 'application/xml'
+
+        #     headers['Content-Type']= 'application/xml'
+        # else:
 
         if isinstance(target, SMCElement):
             headers['If-Match'] = target.etag
 
         xml=None
-        if body is not None:
-            resolve_elt_hnames(self._client, body,
+        if data is not None:
+            resolve_elt_hnames(self._client, data,
                                ignore_errors=print_only)
-            xml = etree.tostring(body, encoding='utf8',
+            xml = etree.tostring(data, encoding='utf8',
                                  pretty_print=True)
 
         method = method.upper()
         if print_only:
-            print_fmt("{} {} {}\n{}", method, target_href, params, xml)
+            print_fmt("{} {} {}\n{}\n{}", method, target_href, params, xml, files)
             return
 
 
         # exceptions propagated: eg SMCOperationFailure
         resp = self._client.request(method, target_href, headers=headers,
-                                 params=params, data=xml)
+                                    params=params, data=xml, files=files)
         return resp.text
