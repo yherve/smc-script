@@ -8,11 +8,7 @@ Overview
 --------
 
 smc-script allows to configure the forcepoint next-gen firewall using
-simple configuration files. Several format are supported
-- cnf: similar to terraform language (hcl)
-- xml
-- yaml: future release
-- json: future release
+simple configuration files 'cnf', similar to terraform language (hcl)
 
 For more flexibility, These files can be preprocessed using the mako
 template language
@@ -22,13 +18,15 @@ Example:
 The following example installs a policy that allow all the traffic.
 
     # cat create_policy.cnf
-    create fw_policy {
+
+```HCL
+    resource fw_policy {
         fw_policy "mypolicy" {
             template "#fw_template_policy/Firewall Template";
         }
     }
 
-    create fw_ipv6_access_rules {
+    resource fw_ipv6_access_rules {
         target="#fw_policy/mypolicy"
         fw_ipv6_access_rule "allow_all" {
             action.action = allow
@@ -37,8 +35,40 @@ The following example installs a policy that allow all the traffic.
             services.any = true
         }
     }
+```
 
 to install the policy, simply enter the following commands
 
     $ smc-script login -k <apikey> <smc-ip-address>
-    $ smc-script run create_policy.cnf
+    $ smc-script apply create_policy.cnf
+
+
+Installing
+-----------------
+
+### prebuild binary
+
+Download smc-script for linux 64bits (built on ubuntu 18.04) [Here](https://github.com/yherve/smc-script/releases/download/v0.9/smc-script)
+
+### run in dev environment
+
+requirements: python2.7, pip and virtualenv
+
+    git clone https://github.com/yherve/smc-script
+    . use_venv.sh
+
+this scripts creates a virtualenv, installs requirements and adds an
+alias command 'smc-script' that runs directly from the source tree
+
+### building a standalone executable
+
+    git clone https://github.com/yherve/smc-script
+    make
+
+the executable is in ./dist/smc-script
+
+
+Documentation
+------------------
+
+Documentation is available in the wiki: <https://github.com/yherve/smc-script/wiki>

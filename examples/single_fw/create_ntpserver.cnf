@@ -3,6 +3,6 @@ resource "ntp" {
     ntp_server "fr_ntp" {
         ntp_host_name     = "fr.pool.ntp.org"
         address           = 151.80.124.104
-        ntp_auth_key_type = None
+        ntp_auth_key_type = none
     }
 }

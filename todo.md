@@ -3,25 +3,6 @@ single_fw/fws11/internal_gateway/fws11 - Primary/internal_endpoint/10.0.3.11
 
 ## features to add
 
-### exit status is incorrect
-
-on error
-
-### read variable from file or env
-
-#### using env variable
-
-similar to terraform https://www.terraform.io/docs/configuration/variables.html
-
-    export CNF_VAR_ip="1.2.3.4"
-
-makes 'ip' variable available
-
-#### using file
-
-- matching *.cnfvars
-- '--var-file='
-
 ### bug: auto login after session expired does not work
 
 Unexpected error 'UnicodeEncodeError'
@@ -32,10 +13,18 @@ policy push from the cli with progress bar
 
 ### hname containing regexp or wildcard
 
-not sure for the syntax:
+ideas for the syntax:
+
+contains the word LogServer
 
     '#log_server/~LogServer'
+
+Starts with LogServer
+
     '#log_server/LogServer*'
+
+Regex
+
     '#log_server/LogServer.+'
 
 
@@ -76,14 +65,6 @@ eg get all the access rules
     smc-script get 'fw_policy/AAAA/fw_ipv4_access_rules/*'
 
 
-### deal with api version
-
-- list available versions on the cli
-- make the working version available in a variable to have conditionals
-
-### write doc
-
-!
 
 ### write tests
 
@@ -193,3 +174,9 @@ unix commands:
 - list hname at any level
 - hname resolve code more generic
 - rb vpn example
+- variable from env. eg     export CNF_VAR_ip="1.2.3.4"
+- variable from file matching *.cnfvars
+- variable from file  '--var-file='
+- exit status is incorrect on error
+- list available versions on the cli
+- make the working version available in a variable to have conditionals

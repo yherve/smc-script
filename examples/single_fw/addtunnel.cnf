@@ -1,0 +1,9 @@
+
+update "#single_fw/${fwname}" {
+    set {
+        # gateway_settings_ref="#gateway_settings/Gateway Default Settings"
+        tunnel_interface "Tunnel Interface 1000" {
+            interface_id = 1000
+        }
+    }
+}

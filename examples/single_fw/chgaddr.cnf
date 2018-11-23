@@ -1,0 +1,7 @@
+
+update "#single_fw/${fwname}" {
+    set "//single_node_interface[@nicid='2']" {
+        address=10.2.0.1
+        network_value=10.2.0.0/16
+    }
+}

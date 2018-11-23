@@ -3,16 +3,14 @@
 # - set encrypted config
 # - change dns (illustrate set/del/add)
 
-resource {
-    location "${fwname}_location"{
-        comment="location for ${fwname}"
-    }
-}
+
+# note that this example is here to illustrate the various options to
+# modify an element. This is not the way to go to simply modify existing
+# DNS entries (you would simply use 'set', no need to use 'del' and 'add')
 
 update "#single_fw/${fwname}" {
     set {
         is_config_encrypted=true
-        location_ref="#location/${fwname}_location"
     }
     set "//domain_server_address[@value='8.8.4.4']" {
         value=1.1.1.1 rank=2.0

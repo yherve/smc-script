@@ -1,0 +1,13 @@
+
+
+update "#single_fw/${fwname}" {
+    add {
+        physical_interface "Interface 3" {
+            interface_id=3
+            single_node_interface {
+                dynamic_index = 3
+                nicid=3; nodeid=1;
+            }
+        }
+    }
+}

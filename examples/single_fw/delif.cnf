@@ -1,0 +1,4 @@
+
+update "#single_fw/${fwname}" {
+    del "//physical_interface[@interface_id='2']";
+}

@@ -45,10 +45,10 @@ command "initial_contact" {
     out="/tmp/engine_${fwname}.cfg"
 }
 
-## command "upload" {
-##     target="#single_fw/${fwname}"
-##     params.filter "${policy}";
-## }
+# command "upload" {
+#     target="#single_fw/${fwname}"
+#     params.filter "${policy}";
+# }
 
 </%def>
 

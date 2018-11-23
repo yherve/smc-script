@@ -8,15 +8,38 @@
 # -------------------------------------------------------------------
 # single_fw
 # -------------------------------------------------------------------
-
-resource "single_fw" {
+resource "#single_fw" {
     single_fw "${fwname}" {
         log_server_ref="#log_server/[0]"
-        ${firewall_node(fwnodename)}
-        ${static_interface("192.168.100.14/24", id=1, primary="true")}
-        ${static_interface("10.0.0.1/16", id=2)}
-        ${dns("8.8.8.8", "8.8.4.4")}
-        ${ntp("#ntp/fr_ntp")}
+
+        firewall_node "${fwname}node" {nodeid=1 }
+
+        physical_interface "Interface 1" {
+            interface_id=1
+            single_node_interface {
+                address=192.168.100.14; network_value=192.168.100.0/24
+                nicid=1; nodeid=1; auth_request=true; primary_mgt=true
+            }
+        }
+
+        physical_interface "Interface 2" {
+            interface_id=2
+            single_node_interface {
+                address=10.0.0.1;network_value=10.0.0.0/16
+                nicid=2; nodeid=1; auth_request=false; primary_mgt=false
+            }
+        }
+
+        domain_server_addresses.domain_server_address {
+            value=8.8.8.8; rank=0.0
+        }
+        domain_server_addresses.domain_server_address {
+            value=8.8.4.4; rank=1.0
+        }
+
+        ntp_settings {
+            ntp_enable = true; ntp_server_refs.ntp_server_ref "#ntp/fr_ntp";
+        }
     }
 }
 
