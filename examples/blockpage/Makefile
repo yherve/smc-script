@@ -1,3 +1,7 @@
+TOOLS_DIR=../../tools
+
+all::gen_ca
+	${TOOLS_DIR}/smc-script apply main.cnf -c
 
 
 gen_ca::

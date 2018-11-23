@@ -9,6 +9,11 @@ resource {
     }
 }
 
+
+# note that this example is here to illustrate the various options to
+# modify an element. This is not the way to go to simply modify existing
+# DNS entries (you would simply use 'set', no need to use 'del' and 'add')
+
 update "#single_fw/${fwname}" {
     set {
         is_config_encrypted=true

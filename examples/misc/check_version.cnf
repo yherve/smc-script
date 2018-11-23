@@ -1,0 +1,14 @@
+
+# to show the result, run this script with:
+# smc-script api_version.cnf -pp
+
+# This script uses >>${API_VERSION}<<
+
+% if API_VERSION <= "6.6":
+# this is at least 6.6
+
+% else:
+# this is old
+
+
+% endif

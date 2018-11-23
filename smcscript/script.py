@@ -14,6 +14,7 @@ import time
 
 # from mako.template import Template
 from mako.lookup import TemplateLookup
+from glob import glob
 
 # import yaml
 # import json
@@ -379,10 +380,18 @@ def delete_all_resources(smc_client, conf):
             return
         resources = failed
 
+
+def read_variables_from_conf(f):
+    content = etconfig.load(f)
+    return content.attrib
+
+
 # pylint: disable=too-many-locals, too-many-arguments
-def run_script(smc_client, filename, print_only=False,
-               preprocess_only=False, user_variables=None,
-               ignore_errors=False, delete_mode=False, cleanup_mode=False):
+def run_script(smc_client, filename,
+               print_only=False, preprocess_only=False,
+               user_variables=None, variable_files=None,
+               ignore_errors=False, delete_mode=False,
+               cleanup_mode=False):
     """execute a script
 
     :param SMCClient smc_client: client to send requests to smc
@@ -404,10 +413,16 @@ def run_script(smc_client, filename, print_only=False,
 
     """
 
-    variables = {}
+    api_version = smc_client.api_version
+    variables = {'API_VERSION': api_version, 'SCRIPT': smc_client}
+
     lookup_dir = os.path.dirname(os.path.abspath(filename))
     var_config_file_name = lookup_dir + "/variables.cnf"
     logger.debug("var_config_file_name=%s", var_config_file_name)
+
+
+    # default values from variables.cnf
+
     if os.path.isfile(var_config_file_name):
         logger.debug("opening =%s", var_config_file_name)
         var_elts = load_config_file(var_config_file_name)
@@ -418,8 +433,31 @@ def run_script(smc_client, filename, print_only=False,
             variables[name] = value
             logger.debug("VAR: %s=%s", name, value)
 
+    # variables obtained from conf implicit file
+    files = glob('*.cnfvars')
+    for f in files:
+        file_variables = read_variables_from_conf(f)
+        variables.update(file_variables)
+
+    # variables obtained from conf explicit file (--var-file)
+    for f in variable_files:
+        if not os.path.isfile(f):
+            raise RunScriptError("variable config file '{}' not found ".format(f))
+        file_variables = read_variables_from_conf(f)
+        variables.update(file_variables)
+
+    # variables obtained from env.variables (take precedence from file)
+    for name, value in os.environ.items():
+        prefix = 'CNF_VAR_'
+        if name.startswith(prefix):
+            var_name = name[len(prefix):]
+            variables[var_name] = value
+
+    # variables obtained from command-line (take precedence from both
+    # file and env.var)
     if user_variables:
         variables.update(user_variables)
+
 
     if preprocess_only:
         rendered = preprocess_config_file(filename, variables)

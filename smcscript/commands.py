@@ -4,6 +4,7 @@ CLI functions
 """
 from __future__ import print_function, unicode_literals
 
+import time
 import logging
 
 import os
@@ -112,6 +113,25 @@ def cmd_logout():
         sess.logout()
         os.remove(session_file_path)
 
+@named("push")
+@arg("-p", "--policy", dest="policy", required=True)
+def cmd_push(hname, policy=None):
+    session_file_path = get_session_file_path()
+    smc_client = SMCClient(session_file_path)
+
+    try:
+        res = smc_client.execute(hname, operation="upload", params={'filter': policy})
+        xml = etree.XML(str(res))
+        follower = xml.findtext("follower")
+        print(follower)
+        while True:
+            res2= smc_client.get(follower)
+            print(res2)
+            print(time.sleep(2))
+
+    except Exception as exc:
+        raise CommandError(exc)
+
 @named("list")
 @arg("hname", nargs='?', default=None)
 def cmd_list(hname, json=False, xml=False, links=False):
@@ -160,6 +180,12 @@ def cmd_del(hname):
      help="print the payload of the smc-api request")
 @arg("-v", '--var', dest='key_values', action='append',
      help="assign a variable (e.g. -v my_ip=10.1.1.1)", default=[], type=str)
+
+
+@arg("-vf", '--var-file', dest='variable_files', action='append',
+     help="read variables from a file", default=[], type=str)
+
+
 @arg("-i", '--ignore-errors', dest='ignore_errors',
      help="continue script execution on error")
 @arg("-d", '--delete', dest='delete_mode',
@@ -168,7 +194,7 @@ def cmd_del(hname):
      help="delete all the resources before applying the config")
 def cmd_apply(filename, print_only=False, preprocess_only=False,
               key_values=None, ignore_errors=False, delete_mode=False,
-              cleanup_mode=False):
+              cleanup_mode=False, variable_files=None):
     """
     execute a script file.
     """
@@ -192,7 +218,8 @@ def cmd_apply(filename, print_only=False, preprocess_only=False,
 
     try:
         run_script(smc_client, filename, print_only, preprocess_only,
-                   variables, ignore_errors, delete_mode, cleanup_mode)
+                   variables, variable_files,
+                   ignore_errors, delete_mode, cleanup_mode)
     except (IOError) as err:
         raise CommandError(err)
     except (TemplateLookupException, SyntaxException, NameError) as err:
@@ -299,4 +326,4 @@ def cmd_show_hname(hname):
 
 
 cmd_list = [cmd_login, cmd_logout, cmd_list, cmd_apply, cmd_del, cmd_get,
-            cmd_show_hname, cmd_convert]
+            cmd_show_hname, cmd_convert, cmd_push]

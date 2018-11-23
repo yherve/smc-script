@@ -10,6 +10,7 @@ from etconfig import utils as et_utils
 from lxml import etree
 # pylint: disable=no-name-in-module
 from lxml.builder import E
+from distutils.version import LooseVersion
 
 # from smcscript.session import Session
 from smcscript.resolver import resolve_hname, resolve_elt_hnames
@@ -201,6 +202,10 @@ class SMCClient(object):
     @property
     def rest_client(self):
         return self._client
+
+    @property
+    def api_version(self):
+        return LooseVersion(str(self.session.api_version))
 
     @property
     def session(self):
@@ -398,10 +403,7 @@ class SMCClient(object):
             'Accept': 'application/xml',
         }
         if not files:
-            headers['Content-Type']= 'application/xml'
-
-        #     headers['Content-Type']= 'application/xml'
-        # else:
+            headers['Content-Type']= 'application/json'
 
         if isinstance(target, SMCElement):
             headers['If-Match'] = target.etag
@@ -410,8 +412,9 @@ class SMCClient(object):
         if data is not None:
             resolve_elt_hnames(self._client, data,
                                ignore_errors=print_only)
-            xml = etree.tostring(data, encoding='utf8',
-                                 pretty_print=True)
+
+            xml = etree.tostring(data, encoding='utf8', pretty_print=True)
+            headers['Content-Type']= 'application/xml'
 
         method = method.upper()
         if print_only:

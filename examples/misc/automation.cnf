@@ -1,0 +1,14 @@
+# this example shows how to change all the single_fw to enable the
+# threatseeker addon and disable config encryption
+
+%for fw in SCRIPT.list("single_fw"):
+
+# now updating: ${fw}
+update "#single_fw/${fw}" {
+    set {
+        is_config_encrypted=false
+        ts_settings {ts_enabled = true}
+    }
+}
+
+%endfor

@@ -525,10 +525,10 @@ def get_api_version(base_url, api_version=None, timeout=10, verify=True):
     if api_version is None:  # Use latest
         api_version = newest_version
     else:
-        if api_version not in versions:
+        if str(api_version) not in versions:
             api_version = newest_version
 
-    return api_version
+    return str(api_version)
 
 
 def get_api_base(base_url, api_version=None, verify=True):

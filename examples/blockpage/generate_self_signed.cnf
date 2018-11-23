@@ -1,0 +1,23 @@
+
+
+resource {
+    tls_signing_certificate_authority "mycert2" {}
+}
+
+command generate_self_signed_cert {
+    target="tls_signing_certificate_authority/mycert2"
+    data.ca_signer_info {
+        is_root=true
+        password="abcd"
+        algorithm="rsa"
+        key_name="kn1"
+        key_size=2048
+        life_time=365
+    }
+}
+
+
+get certificate_export {
+    target="tls_signing_certificate_authority/mycert2"
+    out="/tmp/cert"
+}
