@@ -1,4 +1,4 @@
-
+#!../../dist/smc-script
 
 update "#single_fw/${fwname}" {
     add {

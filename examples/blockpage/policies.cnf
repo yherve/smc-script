@@ -62,9 +62,9 @@ resource fw_ipv4_nat_rules {
     fw_ipv4_nat_rule "nat-to-external" {
         # sources.src "#network/intnw3";
         sources.src "#interface_zone/Internal";
-        # destinations.any = true
+        destinations.any = true
         # note that setting dest to 'External' zone does not work
-        destinations.dst "#interface_zone/External";
+        # destinations.dst "#interface_zone/External";
         services.any = true
         options.dynamic_src_nat {
             automatic_proxy = true
