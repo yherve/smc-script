@@ -1,0 +1,68 @@
+<%! import ipaddress %>
+
+
+# -------------------------------------------------------------------
+<%def name="ndi(nodeid, nicid, ip, primary_mgt='false', primary_heartbeat='false', outgoing='false')">
+ <% intf = ipaddress.ip_interface(unicode(ip)) %>
+             node_interface {
+                 nicid=${nicid} nodeid=${nodeid}
+                 primary_mgt=${primary_mgt}
+                 primary_heartbeat=${primary_heartbeat}
+                 outgoing=${outgoing}
+                 address=${intf.ip}
+                 network_value=${intf.network}
+             }
+</%def>
+
+# -------------------------------------------------------------------
+<%def name="cvi(nicid, ip, auth_request='false', relayed_by_dhcp='false')">
+ <% intf = ipaddress.ip_interface(unicode(ip)) %>
+            cluster_virtual_interface {
+                 nicid=${nicid}
+                 address=${intf.ip}
+                 network_value=${intf.network}
+                 auth_request=${auth_request}
+                 relayed_by_dhcp=${relayed_by_dhcp}
+             }
+</%def>
+
+# -------------------------------------------------------------------
+<%def name="initial_contact(cluster, node1, node2, policy)">
+
+command "bind" {
+    target="#fw_cluster/${cluster}/nodes/${node1}"
+}
+
+command "bind" {
+    target="#fw_cluster/${cluster}/nodes/${node2}"
+}
+
+command "initial_contact" {
+    target="#fw_cluster/${cluster}/nodes/${node1}"
+    out="/tmp/engine_${cluster}_${node1}.cfg"
+}
+
+command "initial_contact" {
+    target="#fw_cluster/${cluster}/nodes/${node2}"
+    out="/tmp/engine_${cluster}_${node2}.cfg"
+}
+
+command "upload" {
+    target="#fw_cluster/${cluster}"
+    params.filter "${policy}";
+}
+
+
+</%def>
+
+
+
+# -------------------------------------------------------------------
+<%def name="add_route(cluster, gateway, network)">
+
+command "add_route" {
+    target="#fw_cluster/${cluster}"
+    params.gateway "${gateway}";
+    params.network "${network}";
+}
+</%def>

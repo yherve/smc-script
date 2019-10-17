@@ -1,0 +1,121 @@
+
+# -------------------------------------------------------------------
+# rwp web user
+# -------------------------------------------------------------------
+resource "#internal_user" {
+    internal_user "user1"{
+#        days_left = -1
+        password  = "Pass123456"
+        unique_id = "cn=user1,dc=stonegate,domain=InternalDomain"
+        user_groups {
+            user_group "#internal_user_group/stonegate";
+        }
+        authentication_methods {
+            authentication_method "#authentication_service/User password";
+        }
+    }
+}
+
+# -------------------------------------------------------------------
+# sso domain
+# -------------------------------------------------------------------
+resource "#ssl_vpn_sso_domain" {
+    ssl_vpn_sso_domain "mysso1"{
+        sso_mode          = persistent
+        enforce_user_name = false
+        timeout           = 30
+    }
+}
+
+resource "#ssl_vpn_service_profile" {
+    ssl_vpn_service_profile "myprofile1" {
+        authentication_type      = http
+        cookie_hiding            = no_encryption
+        login_page_url           = ""
+        ntlm_support             = true
+        password_input_name      = ""
+        post_request_url         = ""
+        user_input_custom_format = ""
+        user_input_format        = user
+        user_input_name          = ""
+        ssl_vpn_profile_exceptions;
+        ssl_vpn_http_fields;
+    }
+
+}
+
+# -------------------------------------------------------------------
+# rwp web resource
+# -------------------------------------------------------------------
+resource "#ssl_vpn_web_service" {
+    ssl_vpn_web_service "svc1"{
+        cookie_protection       = false
+        description             = "my service 1"
+        disable_rewrite         = false
+        external_url            = ""
+        internal_url            = "http://192.168.100.7:8124/"
+        ssl_vpn_service_profile = "#ssl_vpn_service_profile/myprofile1"
+        rewrite_html            = true
+        routing_method          = url_rewrite
+        self_signed_certificate = false
+        ssl_vpn_sso_domain      = "#ssl_vpn_sso_domain/mysso1"
+        start_page              = "/"
+        title                   = "svc1"
+        url_prefix              = "/svc1/"
+        visible_in_portal       = true
+        # ssl_vpn_allowed_urls;
+        # ssl_vpn_althosts;
+        # trusted_cas;
+    }
+}
+
+# -------------------------------------------------------------------
+# rwp policy
+# -------------------------------------------------------------------
+resource "#ssl_vpn_policy" {
+    ssl_vpn_policy "portalpolicy1" {}
+}
+
+resource "#ssl_vpn_policy/portalpolicy1/sslvpn_rules" {
+    sslvpn_rule "allow user1" {
+        rank      = 1.0
+        # parent_policy http://192.168.100.7:8082/6.4/elements/ssl_vpn_policy/1;
+        Authentication {
+            require_auth = true
+            methods;
+
+            users {
+               users "#internal_user_group/Mobile VPN users";
+               users "#internal_user/user1";
+            }
+        }
+        ssl_vpn_web_service "#ssl_vpn_web_service/svc1";
+    }
+}
+
+# -------------------------------------------------------------------
+# rwp portal
+# -------------------------------------------------------------------
+resource "#ssl_vpn_portal" {
+    ssl_vpn_portal "portal1" {
+        allow_empty_referrer    = true
+        log_access              = stored
+        look_and_feel           = forcepoint
+        persistent_session      = true
+        ssl_vpn_policy          = "#ssl_vpn_policy/portalpolicy1"
+        portal_theme            = light
+        self_signed_certificate = true
+        portal_session_timeout  = 2000
+        session_timeout_unit    = HOUR
+        portal_timeout          = 20
+        timeout_unit            = MINUTE
+        title                   = "my portal1"
+        ssl_vpn_hostname {
+            ssl_vpn_hostname = "portal1.demo.fr"
+        }
+        server_credentials {
+            server_credential "#tls_server_credentials";
+        }
+    }
+}
+

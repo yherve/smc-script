@@ -1,0 +1,12 @@
+
+variable "cluster_name" {
+    default = "mycluster1"
+}
+
+variable "node1_name" {
+    default = "fwn11"
+}
+
+variable "node2_name" {
+    default = "fwn12"
+}

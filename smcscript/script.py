@@ -337,6 +337,7 @@ def load_config_file(filename, variables=None):
 
 def _get_resource_name_to_delete(elt):
     name = elt[0].get("name")
+    if not name: return None
     target_hname = _get_target_hname(elt) +"/" + name
     return target_hname
 
@@ -353,6 +354,9 @@ def _delete_all_resources(smc_client, resources):
     failed = []
     for elt in resources:
         target_hname = _get_resource_name_to_delete(elt)
+        if not target_hname:
+            failed.append(elt)
+            continue
         # print_values(target_hname=target_hname)
         try:
             do_delete_elt(smc_client, target_hname, elt)

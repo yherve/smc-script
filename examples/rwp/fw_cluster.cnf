@@ -1,0 +1,131 @@
+<%namespace file="common.cnf" import="*"/>
+
+# -------------------------------------------------------------------
+# network
+# -------------------------------------------------------------------
+resource network {
+    network "mgtnw" {ipv4_network = 192.168.100.0/24 }
+}
+
+resource network {
+    network "lan1clt" {ipv4_network = 192.168.101.0/24 }
+}
+
+resource network {
+    network "lan2svr" {ipv4_network = 192.168.102.0/24 }
+}
+resource network {
+    network "lan6beat" {ipv4_network = 192.168.106.0/24 }
+}
+
+resource ntp {
+    ntp_server "fr_ntp" {
+        ntp_host_name     = "fr.pool.ntp.org"
+        address           = 151.80.124.104
+        ntp_auth_key_type = none
+    }
+}
+
+
+# -------------------------------------------------------------------
+# policy
+# -------------------------------------------------------------------
+resource fw_policy {
+    fw_policy "${cluster_name}_policy" {
+        template "#fw_template_policy/Firewall Template";
+    }
+}
+
+resource fw_ipv4_access_rules {
+    target="#fw_policy/${cluster_name}_policy"
+    fw_ipv4_access_rule "allow_all" {
+        destinations.any = true
+        sources.any = true
+        services.any = true
+        action.action = allow
+    }
+}
+
+# -------------------------------------------------------------------
+# cluster engine
+# -------------------------------------------------------------------
+resource fw_cluster {
+    fw_cluster ${cluster_name} {
+        cluster_mode=balancing
+        log_server_ref="#log_server/[0]"
+
+        firewall_node ${node1_name} {nodeid=1}
+        firewall_node ${node2_name} {nodeid=2}
+
+        domain_server_addresses.domain_server_address {
+            value=8.8.8.8; rank=0.0
+        }
+        domain_server_addresses.domain_server_address {
+            value=8.8.4.4; rank=1.0
+        }
+
+        ntp_settings {
+            ntp_enable = true; ntp_server_refs.ntp_server_ref "#ntp/fr_ntp";
+        }
+
+
+        physical_interface int0 {
+            interface_id=0
+            comment="management"
+            cvi_mode=packetdispatch
+            macaddress=00:00:5e:00:aa:01
+
+            ${cvi(0, "192.168.100.10/24", auth_request="true")}
+            ${ndi(1,0,"192.168.100.11/24", primary_mgt="true", primary_heartbeat="true", outgoing="true")}
+            ${ndi(2,0,"192.168.100.12/24", primary_mgt="true", primary_heartbeat="true", outgoing="true")}
+        }
+        physical_interface int1 {
+            interface_id=1
+            cvi_mode=packetdispatch
+            macaddress=00:00:5e:00:bb:01
+
+            ${cvi(1, "192.168.101.10/24")}
+            ${ndi(1,1,"192.168.101.11/24")}
+            ${ndi(2,1,"192.168.101.12/24")}
+        }
+        physical_interface int2 {
+            interface_id=2
+            cvi_mode=packetdispatch
+            macaddress=00:00:5e:00:cc:01
+
+            ${cvi(2, "192.168.102.10/24")}
+            ${ndi(1,2,"192.168.102.11/24")}
+            ${ndi(2,2,"192.168.102.12/24")}
+        }
+    }
+}
+
+
+# -----------------------
+# set default route
+# -----------------------
+${add_route(cluster_name, "192.168.100.1", "0.0.0.0/0")}
+
+
+# -----------------------
+# enable rwp on enpoint
+# -----------------------
+update "#fw_cluster/${cluster_name}/internal_gateway/[0]" {
+    set {
+        ssl_vpn_portal_settings{
+            ssl_vpn_portal_setting {
+                port           = 443
+                ssl_vpn_portal = "#ssl_vpn_portal/portal1"
+            }
+        }
+    }
+}
+
+update "#fw_cluster/${cluster_name}/internal_gateway/[0]/internal_endpoint/192.168.100.10" {
+    set  {
+        enabled=true
+        ssl_vpn_portal     = true
+        ssl_vpn_tunnel     = false
+        ipsec_vpn          = false
+    }
+}
