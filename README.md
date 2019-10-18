@@ -1,7 +1,7 @@
 smc-script
 ============================
 
-version number: 0.0.1
+version number: 0.9
 author: Yann Hervé
 
 Overview
@@ -20,14 +20,13 @@ The following example installs a policy that allow all the traffic.
     # cat create_policy.cnf
 
 ```HCL
-    resource fw_policy {
+    resource "#fw_policy" {
         fw_policy "mypolicy" {
             template "#fw_template_policy/Firewall Template";
         }
     }
 
-    resource fw_ipv6_access_rules {
-        target="#fw_policy/mypolicy"
+    resource "#fw_policy/mypolicy/fw_ipv6_access_rules" {
         fw_ipv6_access_rule "allow_all" {
             action.action = allow
             destinations.any = true
@@ -48,7 +47,7 @@ Installing
 
 ### prebuild binary
 
-Download smc-script for linux 64bits (built on ubuntu 18.04) [Here](https://github.com/yherve/smc-script/releases/download/v0.9/smc-script)
+Download standalone smc-script for linux 64bits (built on ubuntu 18.04) [Here](https://github.com/yherve/smc-script/files/3743757/smc-script.zip) and place it in your PATH (e.g. ~/bin)
 
 ### run in dev environment
 
