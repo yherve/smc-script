@@ -1,11 +1,24 @@
 
 single_fw/fws11/internal_gateway/fws11 - Primary/internal_endpoint/10.0.3.11
 
-## features to add
+
+## bugs
 
 ### bug: auto login after session expired does not work
 
 Unexpected error 'UnicodeEncodeError'
+
+## export full conf
+
+- transform all urls into hname
+- follow recursively urls and export them (only if not system)
+- identify read-only parameters
+- discards "links", "key"...
+- follow recursively links and export them
+- nice to have: simplify objects by comparing with a default object
+
+## features to add
+
 
 ### wait for policy to be published/report error
 
@@ -128,7 +141,7 @@ unix commands:
 - mv
 
 
-## examples
+## write more examples
 
 - virtual engine
 - policy based vpns
