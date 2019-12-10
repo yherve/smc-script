@@ -215,6 +215,12 @@ class Session(object):
             domain = cfg.get('domain')
             kwargs=cfg.get('kwargs')
 
+        if "ssl_cert_file" in kwargs and kwargs["ssl_cert_file"]:
+            verify = kwargs["ssl_cert_file"]
+
+        if "ssl_cert_file" in kwargs:
+            del kwargs["ssl_cert_file"]
+
         if timeout:
             self._timeout = timeout
 
@@ -235,7 +241,6 @@ class Session(object):
         if kwargs:
             json.update(**kwargs)
             self._extra_args.update(**kwargs)
-
         params = dict(login=login, pwd=pwd) if login and pwd else None
 
         req = dict(

@@ -43,8 +43,8 @@ logger = logging.getLogger(__name__)
      default=None, nargs='?')
 @arg("-k", "--api-key", dest="api_key", required=False,
      help="api key of the SMC rest API")
-@arg("-s", "--secure", dest="secure", action="store_const",
-     const=False, help="Use HTTPS to connect")
+@arg("-s", "--secure", dest="secure", action="store_true",
+     help="Use HTTPS to connect")
 @arg("-c", "--cacert", dest="ca_cert",
      help="path of the CA certificate to verify the connection")
 @arg("-p", "--port", default=8082, help="TCP port of the SMC rest API")
